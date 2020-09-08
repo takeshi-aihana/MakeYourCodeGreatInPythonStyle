@@ -1,6 +1,6 @@
 # あなたのコードを素晴らしい Python スタイルにする
 
-* (原文: [Make Your Code Great, Python Style＠Live Code Stream](https://livecodestream.dev/post/2020-06-08-make-your-code-great-python-style)
+* (原文: [Make Your Code Great, Python Style＠Live Code Stream](https://livecodestream.dev/post/2020-06-08-make-your-code-great-python-style)）
 
 ---
 
@@ -24,7 +24,7 @@ Python では、変数のリストやタプルを演算子の代入側におく�
 ではタプルのアンパックの例から始めましょう：
 
 ```python
-In [1]: a, b, c = (1, 2, 3)                                                                                                                                                                                                                    
+In [1]: a, b, c = (1, 2, 3)
 
 In [2]: a
 
@@ -45,7 +45,7 @@ Out[4]: 3
 さもなくば、次のような ``ValueError`` と言うエラーが発生します：
 
 ```Python
-In [5]: a, b = (1, 2, 3)                                                                                                                                                                                                                       
+In [5]: a, b = (1, 2, 3)
 ---------------------------------------------------------------------------
 ValueError                                Traceback (most recent call last)
 <ipython-input-5-faee755feda6> in <module>
@@ -53,7 +53,7 @@ ValueError                                Traceback (most recent call last)
 
 ValueError: too many values to unpack (expected 2)
 
-In [6]: a, b, c = (1, 2)                                                                                                                                                                                                                       
+In [6]: a, b, c = (1, 2)
 ---------------------------------------------------------------------------
 ValueError                                Traceback (most recent call last)
 <ipython-input-6-24077ba23852> in <module>
@@ -106,7 +106,7 @@ Out[13]: 'a'
 
 ```
 
-あるいは文字列も同様です：
+文字列も同様です：
 
 ```Python
 In [14]: a, b, c = 'def'
@@ -135,11 +135,6 @@ Out[20]: 1
 ```
 
 こんなエレガントな変数の交換を今まで見たことありますか？
-
-
-これは ``yaml.safe_load()`` メソッドを使って YAML ファイルから簡単に生成できます。
-もし古い ``.ini`` 形式のファイルを使う傾向がおありだったとしても、ここで私が言いたいことは、[このドキュメント](https://docs.python.org/3/howto/logging.html#configuring-logging)にあるように *ディクショナリ* 型の設定形式の方が新しいアプリケーションで推奨されるアプローチであるということです。
-その他の例についてはドキュメントの [Logging Cookbook](https://docs.python.org/3/howto/logging-cookbook.html#an-example-dictionary-based-configuration) の章を参照ください。
 
 ---
 
