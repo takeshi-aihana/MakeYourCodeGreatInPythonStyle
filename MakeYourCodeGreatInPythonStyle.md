@@ -8,8 +8,7 @@
 
 『もっと良い Python コードを書くためのヒントを学ぶ』。
 
-
-Python は素晴らしいプログラミング言語の一つで、自分たちのコードをもっと読みやすく、もっと簡潔に、そしてもっとイケてるものにするための素晴らしいツールをいろいろと提供してくれます。
+Python は素晴らしいプログラミング言語の一つであり、自分たちのコードをもっと読みやすく、もっと簡潔に、そしてもっとイケてるものにするための素晴らしいツールをいろいろと提供してくれます。
 今日は、さらに「Python らしい（*Pythonic*）」コードを書く方法を紹介したいと思います：
 この記事では、あなたのコードの品質を改善してくれる素晴らしいヒントを幾つか網羅しています。
 では始めましょう。
@@ -84,7 +83,7 @@ Out[10]: 6
 ```
 
 何が起こったのか分かりますか？
-このコンテキストで ``*`` 演算子を使うと、アンパックの機能に展開され、一個の変数の中に複数の値を格納（パック）することができるようになります。
+このコンテキストで ``*`` 演算子を使うと、アンパックの機能に拡大され、一個の変数の中に複数の値を格納（パック）することができるようになります。
 まさに式によって使われなかった一回限りです。
 これは驚きです。
 ``SyntaxError`` にならないように、代入で使用できる ``*`` 演算子は１個だけであることは忘れないようにして下さい：
@@ -96,7 +95,7 @@ SyntaxError: two starred expressions in assignment
 
 ```
 
-但し、リストをアンパックすることもできます：
+さらにリストをアンパックすることもできます：
 
 ```Python
 In [12]: a, b, c = ['a', 'b', 'c']
@@ -138,76 +137,53 @@ Out[20]: 1
 
 ---
 
-## ログを取得するデコレータ
+## None をチェックする
 
-前項で紹介したログの取得に関するヒントに続いて次は、バグの多い関数を呼び出した時のログが必要になったという状況下で役に立つヒントを紹介します。
-このような場合は関数の本体に直接手を加えるのではなく、特定のログレベルとオプションのメッセージで、全ての関数呼び出しのログを取得する専用のデコレータが利用できます。
-それではデコレータを見てみましょう：
+Python における ``None`` キーワードは ``NULL`` 値または全く値が無いことを定義する際に使用します。
+他のプログラミング言語とは異なり、Python でいう ``None`` は ``NoneType`` と言うデータ型で、``None`` だけが ``None`` になります。
+それではサンプルコードの中で ``None`` がどのように処理されるか観てみることにしましょう：
 
 ```Python
-#!/usr/bin/env python3
+In [1]: x = None
 
-from functools import wraps, partial
-import logging
-import sys
+n [2]: type(x)
+Out[2]: NoneType
 
-def attach_wrapper(obj, func=None):    # オブジェクトの属性として関数を接続するヘルパー関数
-    if func is None:
-        return partial(attach_wrapper, obj)
+In [3]: x == 0
+Out[3]: False
 
-setattr(obj, func.__name__, func)
-    return func
+In [4]: x == False
+Out[4]: False
 
-def log(level, message):               # 実際のデコレータ
-    def decorate(func):
-        logger = logging.getLogger(func.__module__)        # ロガーを取得する
-        formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        log_message = f'{func.__name__} - {message}'
+In [5]: 
 
-        @wraps(func)
-        def wrapper(*args, **kwargs):  # デコレートする関数を実行する前にメッセージをログする
-            logger.log(level, log_message)
-            return func(*args, **kwargs)
-
-        @attach_wrapper(wrapper)       # 属性として set_level() を wrapper() に接続する
-        def set_level(new_level):      # ログのレベルをセットする関数
-            nonlocal level
-            level = new_level
-
-        @attach_wrapper(wrapper)       # 属性として set_message() を wrapper() に接続する
-        def set_message(new_message):  # ログのメッセージをセットする関数
-            nonlocal log_message
-            log_message = f'{func.__name__} - {new_message}'
-
-        return wrapper
-    return decorate
-
-
-# 使用例
-@log(logging.WARN, 'example-param')
-def somebuggyfunc(args):
-    return args
-
-def main():
-    somebuggyfunc('some args')
-
-    # 内部のデコレータ関数にアクセスしてログレベルとログメッセージを変更する
-    somebuggyfunc.set_level(logging.CRITICAL)
-    somebuggyfunc.set_message('new-message')
-    
-    somebuggyfunc('some args');
-
-if __name__ == "__main__":
-    sys.exit(main())
 ```
 
-嘘を言うつもりはありませんが、このコードを理解するには少し時間がかかるかもしれません（それよりもコピー＆ペーストして実際に使ってみたくなるかもしれませんが）。
-まず、このアイディアは ``log()`` 関数が引数をいくつか受け取り、内部のラッパー関数でもそれらを利用できるようにするというものです。
-ここで渡している引数は、デコレータに接続されているアクセス専用関数を追加することで対応できるようにしています。
+ここで変数の値が本当に ``None`` かどうかチェックした場合、次のようにします：
+
+```Python
+In [5]: x == None
+Out[5]: True
+
+```
+
+この方法は間違いではないですが、もっと「Python らしい」方法があります：
+
+```Python
+In [6]: x is None
+Out[6]: True
+
+In [7]: x is not None
+Out[7]: False
+
+```
+
+前者も後者も同じことをしていますが、後者の方がより人間らしいコードに見えます。
+
+---
+
+## 繰り返し（*Iterate*）
+
 ``functools.wraps()`` というデコレータについて ー
 これをで使用しなかったら関数の名前（``func.__name__``）がデコレータの名前で置き換えられてしまいます。
 しかし関数名をログとして記録させたいので、これは問題です。
