@@ -159,7 +159,7 @@ In [5]:
 
 ```
 
-ここで変数の値が本当に ``None`` かどうかチェックした場合、次のようにします：
+ここで変数の値が本当に ``None`` かどうかをチェックしたいのであれば、次のようにします：
 
 ```Python
 In [5]: x == None
@@ -328,7 +328,7 @@ Martin 36
 
 ```
 
-よくオブジェクトを繰り返し処理する必要がでてきますが、Python であれば簡単に実現できます：
+たまにオブジェクトを繰り返し処理しなければならないことがありますが、Python であれば簡単に実現できます：
 
 ```Python
 In [27]: obj = {'name':'Juan', 'age':33}
@@ -420,22 +420,55 @@ In [40]: def add_value(value, seq=None):
 
 ## プロパティ vs Getter と Setter
 
-dd理由がなんであれ、ディクショナリ・クラスを独自に実装する必要がある場合、実際には存在していないキーにアクセスしようとして ``KeyError`` を原因とするバグがいろいろと発生することが予想されます。
-どのキーが無いのかコードの中をあちこち調べて確認する必要がないように、``KeyError`` が発生する度に呼び出される ``__missing__()`` という特殊なメソッドを実装できます。
+注意：このテーマは Java の開発者らとの間で論争に発展する可能性があります :P
+ここで「冗談」以外の話しは、もしあなたが Java の開発者である、またはＣ++を習得している開発者で、次に示すことをしようとしているのであれば、とてもワクワクすることでしょう：
 
 ```Python
-class MyDict(dict):
-    def __missing__(self, key):
-        message = f'{key} not present in the dictionary!'
-        logging.warning(message)
-        return message    # もしくは代わりに何かエラーを発行する
+In [45]: class Person:
+    ...:     def get_name(self):
+    ...:         return self.__name
+    ...:
+    ...:     def set_name(self, name):
+    ...:         self.__name = name
+    ...: 
+
+In [46]: person = Person()
+
+In [47]: person.set_name('Juan')
+
+In [48]: person.get_name()
+OUt[48]: Juan
+
 ```
 
-上の実装はとても単純で、存在しないキーをログ・メッセージとして記録して返すだけですが、他にも貴重な情報をログとして出力しておけば、コードの中の何が間違っているかといった更に詳細な状況を提供することだって可能です。
+さて、何も問題が無くても、これは Python のやり方ではありません。
+Python のやり方を説明する前に、ボクシングのグローブを用意しましょう :)
+
+```Python
+In [50]: class Person:
+    ...:     @property
+    ...:     def name(self):
+    ...:         return self.__name
+    ...: 
+    ...:     @name.setter
+    ...:     def name(self, value):
+    ...:         self.__name = value
+    ...: 
+
+In [51]: person = Person()
+
+In [52]: person.name = 'Juan'
+
+In [53]: person.name
+Out[53]: 'Juan'
+
+```
+
+よし、これで殴り合いする準備ができました :D
 
 ---
 
-## クラッシュしたアプリケーションのデバッグ
+## Protected と Private の属性（でも本当はそうではないです...）
 
 何が起こっているかを確認する前にアプリケーションがクラッシュしてしまった場合、ここで紹介するトリックは非常に有効です。
 
