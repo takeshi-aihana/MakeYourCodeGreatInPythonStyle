@@ -470,79 +470,86 @@ Out[53]: 'Juan'
 
 ## Protected と Private の属性（でも本当はそうではないです...）
 
-何が起こっているかを確認する前にアプリケーションがクラッシュしてしまった場合、ここで紹介するトリックは非常に有効です。
-
-アプリケーションを ``-i`` オプション付きで起動する（``python3 -i app.py``）と、アプリケーションが終了すると同時にインタラクティブ・シェルモードが開始されます。
-このモードで変数や関数を調査することができます。
-
-もしそれでも不十分というのであれば、いっそ「大きなハンマー」〜 ``pdb``（Python デバッガ） 〜 を持ち出してくるという手もあります。
-``pdb`` には、それ自体で記事が一つ書けてしまうほど機能が沢山あります。
-そのため、ここでは例と一番重要なお手本についての要約を紹介します。
-まずはクラッシュを引き起こす小さなスクリプトを見てみることにします：
+任意のオブジェクト内からしかアクセスすることができない "Protected" や "Private" といったインスタンス変数は Python には存在しませんが、これらのプロパティを指定するために全ての Python 開発者が使用する「慣例」があります。
 
 ```Python
-# crashing_app.py
-SOME_VAR = 42
+In [54]: class Test:
+    ...:     def __init__(self, *args):
+    ...:         self.x, self._y, self.__z = args
+    ...: 
 
-class SomeError(Exception):
-    pass
-
-def func():
-    raise SomeError('Something went wrong...')
-
-def main():
-    func()
+In [55]: test = Test(1, 2, 3)
 
 ```
 
-ここで ``-i`` オプション付きで実行すると、すぐにデバッグできる状態になります：
+ここで、もしクラスのブロック外からプロパティの ``x`` にアクセスしようとすると、``x`` に格納された値を取得します。
+これは間違いではなく、そして良い慣習です。
 
 ```Python
-# クラッシュするアプリケーションを実行します
-$ python3 -i crashing_app.py
-Traceback (most recent call last):
-  File "crashing_app.py", line 23, in <module>
-    sys.exit(main())
-  File "crashing_app.py", line 20, in main
-    func()
-  File "crashing_app.py", line 17, in func
-    raise SomeError('Something went wrong...')
-__main__.SomeError: Something went wrong...
->>> # 今、インタラクティブ・シェルモードに居ます
->>> import pdb
->>> pdb.pm()    # Post-Mortem デバッガを起動します
-> .../crashing_app.py(17)func()
--> raise SomeError('Something went wrong...')
-(Pdb) # ここでデバッガモードに入るので、いろいろ調査したりコマンドを実行できます
-(Pdb) p SOME_VAR    # 変数の中身を表示します
-42
-(Pdb) l    # 現在実行している前後のコードを表示してみます
- 12
- 13     class SomeError(Exception):
- 14         pass
- 15 
- 16     def func():
- 17  ->     raise SomeError('Something went wrong...')
- 18 
- 19     def main():
- 20         func()
- 21 
- 22     if __name__ == "__main__":
-(Pdb)  # このあともデバッグを継続します（ブレークポイントを張ったり、コードをステップ事項したりなど）
+In [56]: test.x
+Out[56]: 1
 
 ```
 
-上で紹介したデバッグ・セッションの例は ``pdb`` を使って何ができるのかを端的に示しています。
-まずアプリケーションが終了したあと、対話式のデバッグ・セッションに入ります。
-次に ``pdb`` モジュールをインポートしてデバッガを起動します。
-この時点で ``pdb`` の全てのコマンドを利用できるようになります。
-上の例だと、``p`` コマンドを使って変数の中身を表示し、``l`` コマンドでコードの一覧を表示します。
-たいていはブレークポイントをセットするために ``b 行番号`` コマンドを使い、そのブレークポイントに到達するまで ``c`` コマンドを叩いてアプリケーションを実行させ、``s`` コマンドで関数の内部をステップ単位で実行し続け、追加で ``w`` コマンドでスタックトレースを表示することになります。
-コマンドの完全な一覧については [pdb のドキュメント](https://docs.python.org/3/library/pdb.html#debugger-commands)をご覧ください。
+``_y`` に対しても同じことができます：
+
+```Python
+In [57]: test._y
+Out[57]: 2
+
+```
+
+結果を得ることはできますが、これは悪い慣習です。なぜなら ``_`` で始まっているプロパティはクラスの外側からアクセスすることはできないとクラスの開発者が意図したものだからです。
+
+では ``__z`` の場合はどうでしょう：
+
+```Python
+In [58]: test.__z
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+<ipython-input-58-ae374415690a> in <module>
+----> 1 test.__z
+
+AttributeError: 'Test' object has no attribute '__z'
+
+```
+
+この場合はエラーになりますが、依然としてプロパティにアクセスすることは可能なので、コードにちょっとした「魔法」を付け加えるだけで対応できます。
+
+```Python
+In [59]: test._Test__z
+Out[59]: 3
+
+```
+
+プロパティの前に ``_クラス名`` を付けると値を参照できますが、この方法はひどい間違いです。
+
+これに関して [Python のドキュメント](https://docs.python.org/ja/3/tutorial/classes.html#private-variables)によると：
+
+> a name prefixed with an underscore (e.g. _spam) should be treated
+> as a non-public part of the API (whether it is a function, a method
+> or a data member). It should be considered an implementation detail
+> and subject to change without notice.
+> 
+> Any identifier of the form __spam (at least two leading
+> underscores, at most one trailing underscore) is textually replaced
+> with _classname__spam, where classname is the current class
+> name with leading underscore(s) stripped
+>
+> （日本語版）
+>
+> アンダースコアで始まる名前 (例えば _spam) は、(関数であれメソッドであれ
+> データメンバであれ) 非 public なAPIとして扱います。これらは、予告なく
+> 変更されるかもしれない実装の詳細として扱われるべきです。
+>
+> __spam (先頭に二個以上の下線文字、末尾に一個以下の下線文字) という形式
+> の識別子は、 _classname__spam へとテキスト置換されるようになりました。
+> ここで classname は、現在のクラス名から先頭の下線文字をはぎとった名前に
+> なります。
 
 ---
 
-## スタックトレースの調査
+## リソースを扱う際はコンテキスト・マネージャを使おう
 
 例えばリモート・サーバ上で動いている Flask とか Django のような、インタラクティブなデバッグ・モードが使えないアプリケーションのコードがあるとしましょう。
 そのような場合は ``traceback`` と ``sys`` パッケージを使えば、コードの中で何が問題になっているのかをさらに詳しく見ることができます：
@@ -564,7 +571,7 @@ def func():
 
 ---
 
-## デバッグ中にモジュールを再ロードする
+## まとめ
 
 インタラクティブ・シェルモードで何か関数をデバッグしたり検証をしていると、場合によっては頻繁に手を加えることになるかもしれません。
 「実行する」、「テストする」、そして「コードを変更する」という一連のサイクルを楽にするために、importlib.reload(_モジュール_) を実行して、コードを変更する度にインタラクティブ・シェルモードのセッションを再起動しなくてもよいようにできます：
